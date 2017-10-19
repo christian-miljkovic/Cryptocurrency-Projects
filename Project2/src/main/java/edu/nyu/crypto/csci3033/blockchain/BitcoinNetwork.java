@@ -47,6 +47,7 @@ public class BitcoinNetwork {
 
         NetworkStatistics statistics = new NetworkStatistics(orphanRate, totalHashRate, totalConnectivity);
         miners.forEach(m -> m.initialize(genesis, statistics));
+        
         double singleOrphanRate = orphanRate / (orphanRate + 1);
         for (int i = 0; i < numBlocks; ++i) {
             if (miningRNG.nextDouble() < churnProbability) {
@@ -57,18 +58,22 @@ public class BitcoinNetwork {
                     .map(m -> new SimpleEntry<>(m, miningRNG.sampleExponential(m.getHashRate())))
                     .sorted(Comparator.comparing(Entry::getValue))
                     .collect(Collectors.toList());
+       
             Map<BlockMessage, Double> initialMessages = new HashMap<>(miners.size());
             double currentOrphanProbability = singleOrphanRate;
             for (Entry<Miner, Double> winner : winnningMiners) {
                 Miner winningMiner = winner.getKey();
+                
                 Block previousBlock = winningMiner.currentlyMiningAt();
                 double reward = blockReward.computeBlockReward(previousBlock.getHeight() + 1, winner.getValue());
                 Block nextBlock = new Block(previousBlock, winningMiner.getId(), reward);
                 BlockMessage blockMessage = new BlockMessage(nextBlock, winningMiner);
+                
                 minedRewards.merge(winningMiner,reward,Double::sum);
                 initialMessages.put(blockMessage, 0d);
                 if (miningRNG.nextDouble() < currentOrphanProbability) {
                     currentOrphanProbability *= singleOrphanRate;
+                    
                 } else {
                     break;
                 }
