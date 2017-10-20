@@ -50,7 +50,7 @@ public class MajorityMiner extends BaseMiner implements Miner {
 
             }
         }
-        
+       System.out.println(block); 
     }
 
     
